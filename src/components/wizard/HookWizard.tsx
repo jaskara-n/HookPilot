@@ -1,21 +1,21 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { WizardStepper } from './WizardStepper';
-import { PoolTypeSelector } from './PoolTypeSelector';
-import { FeatureToggles } from './FeatureToggles';
-import { DecisionStep } from './DecisionStep';
-import { ExecuteStep } from './ExecuteStep';
-import { ApiModal } from './ApiModal';
-import { useWizardState } from '@/hooks/useWizardState';
-import { ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { WizardStepper } from "./WizardStepper";
+import { PoolSelectStep } from "./PoolSelectStep";
+import { FeatureToggles } from "./FeatureToggles";
+import { DecisionStep } from "./DecisionStep";
+import { ExecuteStep } from "./ExecuteStep";
+import { ApiModal } from "./ApiModal";
+import { useWizardState } from "@/hooks/useWizardState";
+import { ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 
 const STEPS = [
-  { title: 'Pool', description: 'Configure pool' },
-  { title: 'Logic', description: 'Configure features' },
-  { title: 'Decision', description: 'Choose deployment' },
-  { title: 'Execute', description: 'Deploy hook' },
+  { title: "Pool", description: "Configure pool" },
+  { title: "Logic", description: "Configure features" },
+  { title: "Decision", description: "Choose deployment" },
+  { title: "Execute", description: "Deploy hook" },
 ];
 
 const slideVariants = {
@@ -47,8 +47,11 @@ export function HookWizard() {
     reset,
     canProceed,
     getGasEstimate,
-    getTokenDisplay,
   } = useWizardState();
+
+  useEffect(() => {
+    console.log("Wizard state", state);
+  }, [state]);
 
   const [direction, setDirection] = useState(0);
 
@@ -67,16 +70,11 @@ export function HookWizard() {
     goToStep(step);
   };
 
-  const tokenDisplay = getTokenDisplay();
-
   const renderStepContent = () => {
     switch (state.currentStep) {
       case 0:
         return (
-          <PoolTypeSelector
-            config={state.poolConfig}
-            onChange={setPoolConfig}
-          />
+          <PoolSelectStep config={state.poolConfig} onChange={setPoolConfig} />
         );
       case 1:
         return (
@@ -102,9 +100,14 @@ export function HookWizard() {
       case 3:
         return (
           <ExecuteStep
-            pair={{ tokenA: tokenDisplay.tokenA, tokenB: tokenDisplay.tokenB }}
+            tokenInputs={{
+              tokenA: state.poolConfig.tokenAInput,
+              tokenB: state.poolConfig.tokenBInput,
+              chainId: state.poolConfig.chainId,
+            }}
             flags={state.flags}
             agentPrompt={state.agentPrompt}
+            feeTier={state.poolConfig.feeTier}
             deployChoice={state.deployChoice}
             auditedHook={state.auditedHook}
             deployedAddress={state.deployedAddress}
@@ -141,7 +144,7 @@ export function HookWizard() {
                 initial="enter"
                 animate="center"
                 exit="exit"
-                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
               >
                 {renderStepContent()}
               </motion.div>

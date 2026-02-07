@@ -1,7 +1,15 @@
-import { useState, useCallback } from 'react';
-import { queryHookRegistry, generateCREATE2Salt, generateMockHookAddress, type HookFlags, type AuditedHook, NEW_DEPLOY_GAS_ESTIMATE } from '@/lib/mock-registry';
-import type { PoolConfig } from '@/components/wizard/PoolTypeSelector';
-import { mainnet } from 'viem/chains';
+import { useState, useCallback } from "react";
+import {
+  queryHookRegistry,
+  generateCREATE2Salt,
+  generateMockHookAddress,
+  type HookFlags,
+  type AuditedHook,
+  NEW_DEPLOY_GAS_ESTIMATE,
+} from "@/lib/mock-registry";
+import type { PoolConfig } from "@/components/wizard/PoolSelectStep";
+import { mainnet } from "viem/chains";
+import { resolveTokenInput } from "@/lib/tokens";
 
 export interface WizardState {
   currentStep: number;
@@ -9,7 +17,7 @@ export interface WizardState {
   flags: HookFlags;
   agentPrompt: string;
   auditedHook: AuditedHook | null;
-  deployChoice: 'existing' | 'custom' | null;
+  deployChoice: "existing" | "custom" | null;
   isMining: boolean;
   create2Salt: string | null;
   deployedAddress: string | null;
@@ -19,10 +27,9 @@ const initialState: WizardState = {
   currentStep: 0,
   poolConfig: {
     chainId: mainnet.id,
-    tokenA: null,
-    tokenB: null,
-    tokenAAddress: '',
-    tokenBAddress: '',
+    tokenAInput: "",
+    tokenBInput: "",
+    feeTier: 3000,
   },
   flags: {
     dynamicFees: false,
@@ -30,7 +37,7 @@ const initialState: WizardState = {
     timeLock: false,
     whitelist: false,
   },
-  agentPrompt: '',
+  agentPrompt: "",
   auditedHook: null,
   deployChoice: null,
   isMining: false,
@@ -42,19 +49,19 @@ export function useWizardState() {
   const [state, setState] = useState<WizardState>(initialState);
 
   const setPoolConfig = useCallback((poolConfig: PoolConfig) => {
-    setState(prev => ({ ...prev, poolConfig }));
+    setState((prev) => ({ ...prev, poolConfig }));
   }, []);
 
   const setFlags = useCallback((flags: HookFlags) => {
-    setState(prev => ({ ...prev, flags }));
+    setState((prev) => ({ ...prev, flags }));
   }, []);
 
   const setAgentPrompt = useCallback((agentPrompt: string) => {
-    setState(prev => ({ ...prev, agentPrompt }));
+    setState((prev) => ({ ...prev, agentPrompt }));
   }, []);
 
   const goToStep = useCallback((step: number) => {
-    setState(prev => {
+    setState((prev) => {
       // When moving to step 3 (Decision), query the registry
       if (step === 2) {
         const auditedHook = queryHookRegistry(prev.flags);
@@ -72,20 +79,20 @@ export function useWizardState() {
     goToStep(Math.max(0, state.currentStep - 1));
   }, [state.currentStep, goToStep]);
 
-  const selectDeployChoice = useCallback((choice: 'existing' | 'custom') => {
-    setState(prev => ({ ...prev, deployChoice: choice }));
+  const selectDeployChoice = useCallback((choice: "existing" | "custom") => {
+    setState((prev) => ({ ...prev, deployChoice: choice }));
   }, []);
 
   const startMining = useCallback(async () => {
-    setState(prev => ({ ...prev, isMining: true }));
-    
+    setState((prev) => ({ ...prev, isMining: true }));
+
     // Simulate 5-second mining animation
-    await new Promise(resolve => setTimeout(resolve, 5000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+
     const salt = generateCREATE2Salt();
     const address = generateMockHookAddress(salt);
-    
-    setState(prev => ({
+
+    setState((prev) => ({
       ...prev,
       isMining: false,
       create2Salt: salt,
@@ -97,27 +104,37 @@ export function useWizardState() {
     setState(initialState);
   }, []);
 
-  const isValidAddress = (address: string) => {
-    return /^0x[a-fA-F0-9]{40}$/.test(address);
-  };
-
-  const canProceed = useCallback((step: number): boolean => {
-    switch (step) {
-      case 0: {
-        const { poolConfig } = state;
-        if (poolConfig.tokenA && poolConfig.tokenB) {
-          return poolConfig.tokenA !== poolConfig.tokenB;
+  const canProceed = useCallback(
+    (step: number): boolean => {
+      switch (step) {
+        case 0: {
+          const { poolConfig } = state;
+          const tokenA = resolveTokenInput(
+            poolConfig.tokenAInput,
+            poolConfig.chainId,
+          );
+          const tokenB = resolveTokenInput(
+            poolConfig.tokenBInput,
+            poolConfig.chainId,
+          );
+          if (!tokenA?.address || !tokenB?.address) {
+            return false;
+          }
+          return tokenA.address.toLowerCase() !== tokenB.address.toLowerCase();
         }
-        return isValidAddress(poolConfig.tokenAAddress) && isValidAddress(poolConfig.tokenBAddress);
+        case 1:
+          return (
+            Object.values(state.flags).some(Boolean) ||
+            state.agentPrompt.length > 0
+          );
+        case 2:
+          return state.deployChoice !== null;
+        default:
+          return true;
       }
-      case 1:
-        return Object.values(state.flags).some(Boolean) || state.agentPrompt.length > 0;
-      case 2:
-        return state.deployChoice !== null;
-      default:
-        return true;
-    }
-  }, [state]);
+    },
+    [state],
+  );
 
   const getGasEstimate = useCallback(() => {
     if (state.auditedHook) {
@@ -133,13 +150,6 @@ export function useWizardState() {
   }, [state.auditedHook]);
 
   // Helper to get display token names
-  const getTokenDisplay = useCallback(() => {
-    const { poolConfig } = state;
-    const tokenA = poolConfig.tokenA || (poolConfig.tokenAAddress ? `${poolConfig.tokenAAddress.slice(0, 6)}...` : null);
-    const tokenB = poolConfig.tokenB || (poolConfig.tokenBAddress ? `${poolConfig.tokenBAddress.slice(0, 6)}...` : null);
-    return { tokenA, tokenB };
-  }, [state.poolConfig]);
-
   return {
     state,
     setPoolConfig,
@@ -153,6 +163,5 @@ export function useWizardState() {
     reset,
     canProceed,
     getGasEstimate,
-    getTokenDisplay,
   };
 }

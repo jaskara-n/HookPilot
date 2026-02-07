@@ -4,30 +4,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { generateHookCode } from "@/lib/hook-code-generator";
 import type { HookFlags, AuditedHook } from "@/lib/mock-registry";
-import { POOL_MANAGER_ADDRESS } from "@/lib/wagmi-config";
+import { resolveTokenInput } from "@/lib/tokens";
 import { FileCode, Send, Wallet, CheckCircle2 } from "lucide-react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useConnection } from "wagmi";
 
 interface ExecuteStepProps {
-  pair: { tokenA: string | null; tokenB: string | null };
+  tokenInputs: { tokenA: string; tokenB: string; chainId: number };
   flags: HookFlags;
   agentPrompt: string;
+  feeTier: number;
   deployChoice: "existing" | "custom" | null;
   auditedHook: AuditedHook | null;
   deployedAddress: string | null;
 }
 
-const TOKEN_ADDRESSES: Record<string, string> = {
-  USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-  ETH: "0x0000000000000000000000000000000000000000",
-  WBTC: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
-};
-
 export function ExecuteStep({
-  pair,
+  tokenInputs,
   flags,
   agentPrompt,
+  feeTier,
   deployChoice,
   auditedHook,
   deployedAddress,
@@ -45,15 +41,24 @@ export function ExecuteStep({
       ? auditedHook.address
       : deployedAddress || "0x0000000000000000000000000000000000000000";
 
+  const tokenAResolved = resolveTokenInput(
+    tokenInputs.tokenA,
+    tokenInputs.chainId,
+  );
+  const tokenBResolved = resolveTokenInput(
+    tokenInputs.tokenB,
+    tokenInputs.chainId,
+  );
+
   const txSummary = {
     contract: "PoolManager",
-    address: POOL_MANAGER_ADDRESS,
+    address: "",
     method: "initialize",
     params: {
       key: {
-        currency0: pair.tokenA ? TOKEN_ADDRESSES[pair.tokenA] : "",
-        currency1: pair.tokenB ? TOKEN_ADDRESSES[pair.tokenB] : "",
-        fee: 3000,
+        currency0: tokenAResolved?.address ?? "",
+        currency1: tokenBResolved?.address ?? "",
+        fee: feeTier,
         tickSpacing: 60,
         hooks: hookAddress,
       },
