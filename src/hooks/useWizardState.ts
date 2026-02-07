@@ -18,7 +18,6 @@ export interface WizardState {
 const initialState: WizardState = {
   currentStep: 0,
   poolConfig: {
-    poolType: 'new',
     chainId: mainnet.id,
     tokenA: null,
     tokenB: null,
@@ -106,10 +105,6 @@ export function useWizardState() {
     switch (step) {
       case 0: {
         const { poolConfig } = state;
-        if (poolConfig.poolType === 'existing') {
-          return isValidAddress(poolConfig.tokenAAddress) && isValidAddress(poolConfig.tokenBAddress);
-        }
-        // New pool
         if (poolConfig.tokenA && poolConfig.tokenB) {
           return poolConfig.tokenA !== poolConfig.tokenB;
         }
