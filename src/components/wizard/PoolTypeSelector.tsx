@@ -3,8 +3,19 @@ import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Database, Plus, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { arbitrum, base, mainnet, optimism, polygon, sepolia } from 'viem/chains';
 
 interface Token {
   symbol: string;
@@ -19,8 +30,12 @@ const TOKENS: Token[] = [
   { symbol: 'WBTC', name: 'Wrapped Bitcoin', icon: '₿', color: 'from-orange-500 to-amber-500' },
 ];
 
+const MAINNET_CHAINS = [mainnet, base, optimism, arbitrum, polygon] as const;
+const TESTNET_CHAINS = [sepolia] as const;
+
 export interface PoolConfig {
   poolType: 'existing' | 'new';
+  chainId: number;
   tokenA: string | null;
   tokenB: string | null;
   tokenAAddress: string;
@@ -47,6 +62,17 @@ export function PoolTypeSelector({ config, onChange }: PoolTypeSelectorProps) {
     setInputMode(value === 'existing' ? 'address' : 'select');
   };
 
+  const handleChainChange = (value: string) => {
+    const chainId = Number(value);
+    if (Number.isNaN(chainId)) {
+      return;
+    }
+    onChange({
+      ...config,
+      chainId,
+    });
+  };
+
   const handleTokenSelect = (token: string, slot: 'tokenA' | 'tokenB') => {
     onChange({
       ...config,
@@ -70,6 +96,41 @@ export function PoolTypeSelector({ config, onChange }: PoolTypeSelectorProps) {
 
   return (
     <div className="space-y-8">
+      <div className="space-y-3">
+        <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+          Network
+        </Label>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <Select value={String(config.chainId)} onValueChange={handleChainChange}>
+            <SelectTrigger className="sm:w-[260px]">
+              <SelectValue placeholder="Select chain" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Mainnets</SelectLabel>
+                {MAINNET_CHAINS.map((chain) => (
+                  <SelectItem key={chain.id} value={String(chain.id)}>
+                    {chain.name} · {chain.nativeCurrency.symbol}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+              <SelectSeparator />
+              <SelectGroup>
+                <SelectLabel>Testnets</SelectLabel>
+                {TESTNET_CHAINS.map((chain) => (
+                  <SelectItem key={chain.id} value={String(chain.id)}>
+                    {chain.name} · {chain.nativeCurrency.symbol}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Uses viem chain config for cross-chain deployments.
+          </p>
+        </div>
+      </div>
+
       {/* Pool Type Selection */}
       <div className="space-y-4">
         <Label className="text-sm font-medium text-muted-foreground uppercase tracking-wider">

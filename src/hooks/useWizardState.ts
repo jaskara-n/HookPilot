@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { queryHookRegistry, generateCREATE2Salt, generateMockHookAddress, type HookFlags, type AuditedHook, NEW_DEPLOY_GAS_ESTIMATE } from '@/lib/mock-registry';
 import type { PoolConfig } from '@/components/wizard/PoolTypeSelector';
+import { mainnet } from 'viem/chains';
 
 export interface WizardState {
   currentStep: number;
@@ -18,6 +19,7 @@ const initialState: WizardState = {
   currentStep: 0,
   poolConfig: {
     poolType: 'new',
+    chainId: mainnet.id,
     tokenA: null,
     tokenB: null,
     tokenAAddress: '',
