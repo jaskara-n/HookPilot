@@ -9,7 +9,6 @@ import {
 } from "@/lib/mock-registry";
 import type { PoolConfig } from "@/components/wizard/PoolSelectStep";
 import { mainnet } from "viem/chains";
-import { resolveTokenInput } from "@/lib/tokens";
 
 export interface WizardState {
   currentStep: number;
@@ -30,12 +29,12 @@ const initialState: WizardState = {
     tokenAInput: "",
     tokenBInput: "",
     feeTier: 3000,
+    tokenAAddress: "",
+    tokenBAddress: "",
   },
   flags: {
-    dynamicFees: false,
+    feeThreshold: false,
     limitOrders: false,
-    timeLock: false,
-    whitelist: false,
   },
   agentPrompt: "",
   auditedHook: null,
@@ -109,18 +108,13 @@ export function useWizardState() {
       switch (step) {
         case 0: {
           const { poolConfig } = state;
-          const tokenA = resolveTokenInput(
-            poolConfig.tokenAInput,
-            poolConfig.chainId,
-          );
-          const tokenB = resolveTokenInput(
-            poolConfig.tokenBInput,
-            poolConfig.chainId,
-          );
-          if (!tokenA?.address || !tokenB?.address) {
+          if (!poolConfig.tokenAAddress || !poolConfig.tokenBAddress) {
             return false;
           }
-          return tokenA.address.toLowerCase() !== tokenB.address.toLowerCase();
+          return (
+            poolConfig.tokenAAddress.toLowerCase() !==
+            poolConfig.tokenBAddress.toLowerCase()
+          );
         }
         case 1:
           return (

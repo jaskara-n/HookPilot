@@ -104,6 +104,8 @@ export function HookWizard() {
               tokenA: state.poolConfig.tokenAInput,
               tokenB: state.poolConfig.tokenBInput,
               chainId: state.poolConfig.chainId,
+              tokenAAddress: state.poolConfig.tokenAAddress,
+              tokenBAddress: state.poolConfig.tokenBAddress,
             }}
             flags={state.flags}
             agentPrompt={state.agentPrompt}

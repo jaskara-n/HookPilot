@@ -23,10 +23,8 @@ const API_SCHEMA = `{
       "tokenB": "string (address or symbol)"
     },
     "flags": {
-      "dynamicFees": "boolean",
-      "limitOrders": "boolean",
-      "timeLock": "boolean",
-      "whitelist": "boolean"
+      "feeThreshold": "boolean",
+      "limitOrders": "boolean"
     },
     "agentPrompt": "string (optional, natural language)",
     "deployStrategy": "'existing' | 'custom'",

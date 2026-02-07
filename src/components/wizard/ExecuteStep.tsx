@@ -4,13 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { generateHookCode } from "@/lib/hook-code-generator";
 import type { HookFlags, AuditedHook } from "@/lib/mock-registry";
-import { resolveTokenInput } from "@/lib/tokens";
 import { FileCode, Send, Wallet, CheckCircle2 } from "lucide-react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useConnection } from "wagmi";
 
 interface ExecuteStepProps {
-  tokenInputs: { tokenA: string; tokenB: string; chainId: number };
+  tokenInputs: {
+    tokenA: string;
+    tokenB: string;
+    chainId: number;
+    tokenAAddress: string;
+    tokenBAddress: string;
+  };
   flags: HookFlags;
   agentPrompt: string;
   feeTier: number;
@@ -41,23 +46,14 @@ export function ExecuteStep({
       ? auditedHook.address
       : deployedAddress || "0x0000000000000000000000000000000000000000";
 
-  const tokenAResolved = resolveTokenInput(
-    tokenInputs.tokenA,
-    tokenInputs.chainId,
-  );
-  const tokenBResolved = resolveTokenInput(
-    tokenInputs.tokenB,
-    tokenInputs.chainId,
-  );
-
   const txSummary = {
     contract: "PoolManager",
     address: "",
     method: "initialize",
     params: {
       key: {
-        currency0: tokenAResolved?.address ?? "",
-        currency1: tokenBResolved?.address ?? "",
+        currency0: tokenInputs.tokenAAddress,
+        currency1: tokenInputs.tokenBAddress,
         fee: feeTier,
         tickSpacing: 60,
         hooks: hookAddress,

@@ -24,6 +24,8 @@ export interface PoolConfig {
   tokenAInput: string;
   tokenBInput: string;
   feeTier: number;
+  tokenAAddress: string;
+  tokenBAddress: string;
 }
 
 interface PoolSelectStepProps {
@@ -33,9 +35,13 @@ interface PoolSelectStepProps {
 
 export function PoolSelectStep({ config, onChange }: PoolSelectStepProps) {
   const handleChainChange = (chain: Chain) => {
+    const tokenAResolved = resolveTokenInput(config.tokenAInput, chain.id);
+    const tokenBResolved = resolveTokenInput(config.tokenBInput, chain.id);
     onChange({
       ...config,
       chainId: chain.id,
+      tokenAAddress: tokenAResolved?.address ?? "",
+      tokenBAddress: tokenBResolved?.address ?? "",
     });
   };
 
@@ -43,9 +49,22 @@ export function PoolSelectStep({ config, onChange }: PoolSelectStepProps) {
     value: string,
     slot: "tokenAInput" | "tokenBInput",
   ) => {
-    onChange({
+    const next = {
       ...config,
       [slot]: value,
+    };
+    const tokenAResolved = resolveTokenInput(
+      slot === "tokenAInput" ? value : next.tokenAInput,
+      next.chainId,
+    );
+    const tokenBResolved = resolveTokenInput(
+      slot === "tokenBInput" ? value : next.tokenBInput,
+      next.chainId,
+    );
+    onChange({
+      ...next,
+      tokenAAddress: tokenAResolved?.address ?? "",
+      tokenBAddress: tokenBResolved?.address ?? "",
     });
   };
 

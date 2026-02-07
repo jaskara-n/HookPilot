@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { HookFlags } from '@/lib/mock-registry';
-import { Zap, ListOrdered, Clock, Shield, Sparkles, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Percent, ListOrdered, Sparkles, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 interface FeatureTogglesProps {
   flags: HookFlags;
@@ -14,28 +14,16 @@ interface FeatureTogglesProps {
 
 const FEATURES = [
   {
-    key: 'dynamicFees' as const,
-    label: 'Dynamic Fees',
-    description: 'Adjust swap fees based on volatility or liquidity',
-    icon: Zap,
+    key: 'feeThreshold' as const,
+    label: 'Fee Threshold',
+    description: 'Collect fees and distribute once the threshold is reached',
+    icon: Percent,
   },
   {
     key: 'limitOrders' as const,
     label: 'Limit Orders',
     description: 'Enable limit order functionality in the pool',
     icon: ListOrdered,
-  },
-  {
-    key: 'timeLock' as const,
-    label: 'Time-Lock',
-    description: 'Lock liquidity for a specified duration',
-    icon: Clock,
-  },
-  {
-    key: 'whitelist' as const,
-    label: 'Whitelist',
-    description: 'Restrict pool access to whitelisted addresses',
-    icon: Shield,
   },
 ];
 
