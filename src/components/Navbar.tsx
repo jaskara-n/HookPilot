@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
 import { Moon, Sun, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 export function Navbar() {
   const { resolvedTheme, setTheme } = useTheme();
@@ -34,6 +35,8 @@ export function Navbar() {
                 </Button>
               </Link>
             )}
+
+            <ConnectButton />
             
             <Button
               variant="ghost"

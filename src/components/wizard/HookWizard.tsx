@@ -51,7 +51,6 @@ export function HookWizard() {
   } = useWizardState();
 
   const [direction, setDirection] = useState(0);
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
 
   const handleNext = () => {
     setDirection(1);
@@ -66,10 +65,6 @@ export function HookWizard() {
   const handleStepClick = (step: number) => {
     setDirection(step > state.currentStep ? 1 : -1);
     goToStep(step);
-  };
-
-  const handleConnectWallet = () => {
-    setIsWalletConnected(true);
   };
 
   const tokenDisplay = getTokenDisplay();
@@ -113,8 +108,6 @@ export function HookWizard() {
             deployChoice={state.deployChoice}
             auditedHook={state.auditedHook}
             deployedAddress={state.deployedAddress}
-            isWalletConnected={isWalletConnected}
-            onConnectWallet={handleConnectWallet}
           />
         );
       default:

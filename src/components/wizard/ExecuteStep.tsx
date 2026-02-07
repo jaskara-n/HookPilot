@@ -1,28 +1,27 @@
-import { useEffect, useState } from 'react';
-import Editor from '@monaco-editor/react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { generateHookCode } from '@/lib/hook-code-generator';
-import type { HookFlags, AuditedHook } from '@/lib/mock-registry';
-import { POOL_MANAGER_ADDRESS } from '@/lib/wagmi-config';
-import { FileCode, Send, Wallet, CheckCircle2 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import Editor from "@monaco-editor/react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { generateHookCode } from "@/lib/hook-code-generator";
+import type { HookFlags, AuditedHook } from "@/lib/mock-registry";
+import { POOL_MANAGER_ADDRESS } from "@/lib/wagmi-config";
+import { FileCode, Send, Wallet, CheckCircle2 } from "lucide-react";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useConnection } from "wagmi";
 
 interface ExecuteStepProps {
   pair: { tokenA: string | null; tokenB: string | null };
   flags: HookFlags;
   agentPrompt: string;
-  deployChoice: 'existing' | 'custom' | null;
+  deployChoice: "existing" | "custom" | null;
   auditedHook: AuditedHook | null;
   deployedAddress: string | null;
-  isWalletConnected: boolean;
-  onConnectWallet: () => void;
 }
 
 const TOKEN_ADDRESSES: Record<string, string> = {
-  USDC: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-  ETH: '0x0000000000000000000000000000000000000000',
-  WBTC: '0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599',
+  USDC: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+  ETH: "0x0000000000000000000000000000000000000000",
+  WBTC: "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599",
 };
 
 export function ExecuteStep({
@@ -32,10 +31,9 @@ export function ExecuteStep({
   deployChoice,
   auditedHook,
   deployedAddress,
-  isWalletConnected,
-  onConnectWallet,
 }: ExecuteStepProps) {
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState("");
+  const connection = useConnection();
 
   useEffect(() => {
     const generatedCode = generateHookCode(flags, agentPrompt);
@@ -43,23 +41,23 @@ export function ExecuteStep({
   }, [flags, agentPrompt]);
 
   const hookAddress =
-    deployChoice === 'existing' && auditedHook
+    deployChoice === "existing" && auditedHook
       ? auditedHook.address
-      : deployedAddress || '0x0000000000000000000000000000000000000000';
+      : deployedAddress || "0x0000000000000000000000000000000000000000";
 
   const txSummary = {
-    contract: 'PoolManager',
+    contract: "PoolManager",
     address: POOL_MANAGER_ADDRESS,
-    method: 'initialize',
+    method: "initialize",
     params: {
       key: {
-        currency0: pair.tokenA ? TOKEN_ADDRESSES[pair.tokenA] : '',
-        currency1: pair.tokenB ? TOKEN_ADDRESSES[pair.tokenB] : '',
+        currency0: pair.tokenA ? TOKEN_ADDRESSES[pair.tokenA] : "",
+        currency1: pair.tokenB ? TOKEN_ADDRESSES[pair.tokenB] : "",
         fee: 3000,
         tickSpacing: 60,
         hooks: hookAddress,
       },
-      sqrtPriceX96: '79228162514264337593543950336', // 1:1 price
+      sqrtPriceX96: "79228162514264337593543950336", // 1:1 price
     },
   };
 
@@ -76,57 +74,84 @@ export function ExecuteStep({
         <CardContent className="space-y-4 overflow-y-auto h-[calc(100%-80px)]">
           <div className="space-y-3">
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Contract</p>
-              <p className="font-mono text-sm text-primary">{txSummary.contract}</p>
-              <code className="text-xs text-muted-foreground break-all">{txSummary.address}</code>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                Contract
+              </p>
+              <p className="font-mono text-sm text-primary">
+                {txSummary.contract}
+              </p>
+              <code className="text-xs text-muted-foreground break-all">
+                {txSummary.address}
+              </code>
             </div>
 
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Method</p>
-              <p className="font-mono text-sm text-secondary">{txSummary.method}()</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
+                Method
+              </p>
+              <p className="font-mono text-sm text-secondary">
+                {txSummary.method}()
+              </p>
             </div>
 
             <div className="p-3 rounded-lg bg-muted/50">
-              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">Parameters</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
+                Parameters
+              </p>
               <div className="space-y-2 text-xs font-mono">
                 <div>
                   <span className="text-muted-foreground">currency0: </span>
-                  <span className="text-foreground break-all">{txSummary.params.key.currency0}</span>
+                  <span className="text-foreground break-all">
+                    {txSummary.params.key.currency0}
+                  </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">currency1: </span>
-                  <span className="text-foreground break-all">{txSummary.params.key.currency1}</span>
+                  <span className="text-foreground break-all">
+                    {txSummary.params.key.currency1}
+                  </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">fee: </span>
-                  <span className="text-foreground">{txSummary.params.key.fee}</span>
+                  <span className="text-foreground">
+                    {txSummary.params.key.fee}
+                  </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">tickSpacing: </span>
-                  <span className="text-foreground">{txSummary.params.key.tickSpacing}</span>
+                  <span className="text-foreground">
+                    {txSummary.params.key.tickSpacing}
+                  </span>
                 </div>
                 <div>
                   <span className="text-muted-foreground">hooks: </span>
-                  <span className="text-primary break-all">{txSummary.params.key.hooks}</span>
+                  <span className="text-primary break-all">
+                    {txSummary.params.key.hooks}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="pt-4 border-t border-border">
-            {isWalletConnected ? (
+            {connection.isConnected ? (
               <Button className="w-full bg-gradient-to-r from-primary to-secondary hover:opacity-90">
                 <CheckCircle2 className="w-4 h-4 mr-2" />
                 Sign & Execute Transaction
               </Button>
             ) : (
-              <Button
-                onClick={onConnectWallet}
-                className="w-full bg-gradient-to-r from-secondary to-accent hover:opacity-90"
-              >
-                <Wallet className="w-4 h-4 mr-2" />
-                Connect Wallet to Execute
-              </Button>
+              <ConnectButton.Custom>
+                {({ openConnectModal, mounted }) => (
+                  <Button
+                    onClick={openConnectModal}
+                    disabled={!mounted}
+                    className="w-full bg-gradient-to-r from-secondary to-accent hover:opacity-90"
+                  >
+                    <Wallet className="w-4 h-4 mr-2" />
+                    Connect Wallet to Execute
+                  </Button>
+                )}
+              </ConnectButton.Custom>
             )}
           </div>
         </CardContent>
@@ -150,9 +175,9 @@ export function ExecuteStep({
               readOnly: true,
               minimap: { enabled: false },
               fontSize: 12,
-              lineNumbers: 'on',
+              lineNumbers: "on",
               scrollBeyondLastLine: false,
-              wordWrap: 'on',
+              wordWrap: "on",
               padding: { top: 16, bottom: 16 },
             }}
           />
