@@ -1,0 +1,54 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B0B11"/>
+      <stop offset="0.55" stop-color="#141826"/>
+      <stop offset="1" stop-color="#0C0D13"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="160" y1="80" x2="1040" y2="560" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF2D7A"/>
+      <stop offset="0.55" stop-color="#B14CFF"/>
+      <stop offset="1" stop-color="#00D2FF"/>
+    </linearGradient>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="60"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" rx="48" fill="url(#bg)"/>
+  <circle cx="200" cy="120" r="140" fill="url(#accent)" filter="url(#blur)" opacity="0.5"/>
+  <circle cx="1020" cy="520" r="200" fill="url(#accent)" filter="url(#blur)" opacity="0.35"/>
+
+  <g transform="translate(140 150)">
+    <circle cx="100" cy="100" r="86" stroke="url(#accent)" stroke-width="18" opacity="0.9"/>
+    <circle cx="100" cy="100" r="56" stroke="url(#accent)" stroke-width="10" opacity="0.5"/>
+    <path
+      d="M88 32C88 24.268 94.268 18 102 18H128C135.732 18 142 24.268 142 32C142 39.732 135.732 46 128 46H108V124C108 139.464 120.536 152 136 152H148C155.732 152 162 158.268 162 166C162 173.732 155.732 180 148 180H136C105.072 180 80 154.928 80 124V46H68C60.268 46 54 39.732 54 32C54 24.268 60.268 18 68 18H88Z"
+      fill="#FFFFFF"
+      fill-opacity="0.95"
+    />
+    <circle cx="156" cy="166" r="10" fill="#FFFFFF"/>
+  </g>
+
+  <text x="400" y="230" fill="white" font-size="52" font-family="Sora, sans-serif" font-weight="600">
+    HookWizard
+  </text>
+  <text x="400" y="284" fill="#E5E7EB" font-size="24" font-family="Sora, sans-serif" font-weight="400">
+    Uniswap v4 hook builder and cross-chain liquidity control plane
+  </text>
+  <text x="400" y="334" fill="#9CA3AF" font-size="18" font-family="Sora, sans-serif" font-weight="400">
+    Arc settlement policy · LI.FI refills · agent-ready automation
+  </text>
+
+  <g transform="translate(400 392)">
+    <rect width="200" height="46" rx="23" fill="url(#accent)"/>
+    <text x="100" y="29" text-anchor="middle" fill="white" font-size="16" font-family="Sora, sans-serif" font-weight="600">
+      Build Hooks
+    </text>
+  </g>
+  <g transform="translate(610 392)">
+    <rect width="200" height="46" rx="23" fill="rgba(255,255,255,0.1)"/>
+    <text x="100" y="29" text-anchor="middle" fill="white" font-size="16" font-family="Sora, sans-serif" font-weight="600">
+      Deploy Pools
+    </text>
+  </g>
+</svg>

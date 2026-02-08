@@ -45,6 +45,7 @@ const steps = [
 ];
 
 export function LandingPage() {
+  const baseUrl = import.meta.env.BASE_URL;
   return (
     <div className="min-h-screen pt-16 uniswap-hero">
       {/* Hero Section */}
@@ -68,7 +69,7 @@ export function LandingPage() {
               transition={{ delay: 0.2, duration: 0.5 }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8"
             >
-              <Sparkles className="w-4 h-4 text-primary" />
+              <img src={`${baseUrl}logo.svg`} alt="HookWizard" className="w-5 h-5" />
               <span className="text-sm font-medium text-primary">
                 Uniswap v4 Ready
               </span>

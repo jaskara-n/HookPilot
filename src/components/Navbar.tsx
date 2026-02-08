@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useTheme } from 'next-themes';
-import { Moon, Sun, Zap } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
@@ -9,6 +9,7 @@ export function Navbar() {
   const { resolvedTheme, setTheme } = useTheme();
   const location = useLocation();
   const isWizard = location.pathname === '/wizard';
+  const baseUrl = import.meta.env.BASE_URL;
 
   return (
     <motion.nav
@@ -19,9 +20,11 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-lg gradient-brand flex items-center justify-center group-hover:scale-105 transition-transform">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
+            <img
+              src={`${baseUrl}logo.svg`}
+              alt="HookWizard"
+              className="w-9 h-9 rounded-xl shadow-sm group-hover:scale-105 transition-transform"
+            />
             <span className="font-bold text-lg gradient-brand-text">
               HookWizard
             </span>

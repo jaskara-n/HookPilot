@@ -1,0 +1,28 @@
+<svg width="320" height="320" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="320" y2="320" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B0B11"/>
+      <stop offset="1" stop-color="#151826"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="60" y1="40" x2="280" y2="300" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF2D7A"/>
+      <stop offset="0.55" stop-color="#B14CFF"/>
+      <stop offset="1" stop-color="#00D2FF"/>
+    </linearGradient>
+    <linearGradient id="hook" x1="120" y1="60" x2="240" y2="260" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F0F4FF"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+  </defs>
+  <rect width="320" height="320" rx="72" fill="url(#bg)"/>
+  <circle cx="160" cy="160" r="92" stroke="url(#ring)" stroke-width="18" opacity="0.9"/>
+  <circle cx="160" cy="160" r="60" stroke="url(#ring)" stroke-width="10" opacity="0.5"/>
+  <path
+    d="M148 84C148 76.268 154.268 70 162 70H190C197.732 70 204 76.268 204 84C204 91.732 197.732 98 190 98H168V184C168 201.673 182.327 216 200 216H214C221.732 216 228 222.268 228 230C228 237.732 221.732 244 214 244H200C166.863 244 140 217.137 140 184V98H128C120.268 98 114 91.732 114 84C114 76.268 120.268 70 128 70H148Z"
+    fill="url(#hook)"
+  />
+  <circle cx="224" cy="230" r="10" fill="#FFFFFF" filter="url(#glow)"/>
+</svg>
