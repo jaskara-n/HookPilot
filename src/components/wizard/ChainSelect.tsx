@@ -10,6 +10,7 @@ import {
   sepolia,
 } from "viem/chains";
 import { getV4Addresses } from "@/lib/uniswap-v4-registry";
+import { arcTestnet } from "@/lib/custom-chains";
 
 import { Label } from "@/components/ui/label";
 import {
@@ -24,7 +25,7 @@ import {
 } from "@/components/ui/select";
 
 const MAINNET_CHAINS = [mainnet, base, optimism, arbitrum, polygon];
-const TESTNET_CHAINS = [sepolia, baseSepolia, optimismSepolia];
+const TESTNET_CHAINS = [sepolia, baseSepolia, optimismSepolia, arcTestnet];
 
 interface ChainSelectProps {
   value: number;

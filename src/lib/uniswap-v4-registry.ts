@@ -1,5 +1,6 @@
 import type { Address } from "viem";
 import { sepolia } from "viem/chains";
+import { arcTestnet } from "@/lib/custom-chains";
 
 export interface V4ChainAddresses {
   poolManager?: Address;
@@ -24,6 +25,12 @@ export const V4_REGISTRY: Record<number, V4ChainAddresses> = {
     permit2: PERMIT2_ADDRESS,
     blockscout: "https://eth-sepolia.blockscout.com",
     notes: "Uniswap Foundation v4 test interface deployment (Sepolia)",
+  },
+  [arcTestnet.id]: {
+    permit2: PERMIT2_ADDRESS,
+    blockscout: "https://testnet.arcscan.app",
+    notes:
+      "Arc testnet. USDC is native gas token; v4 deployments not available by default.",
   },
 };
 

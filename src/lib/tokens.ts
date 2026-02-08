@@ -9,6 +9,7 @@ import {
   polygon,
   sepolia,
 } from "viem/chains";
+import { arcTestnet } from "@/lib/custom-chains";
 
 export interface TokenInfo {
   symbol: string;
@@ -62,6 +63,14 @@ const EXTRA_TOKENS: Record<number, TokenInfo[]> = {
       chainId: sepolia.id,
     },
   ],
+  [arcTestnet.id]: [
+    {
+      symbol: "USDC",
+      name: "USD Coin",
+      address: "0x3600000000000000000000000000000000000000",
+      chainId: arcTestnet.id,
+    },
+  ],
 };
 
 const SUPPORTED_CHAINS = [
@@ -73,6 +82,7 @@ const SUPPORTED_CHAINS = [
   arbitrum,
   polygon,
   sepolia,
+  arcTestnet,
 ] as const;
 
 export function getCommonTokens(chainId: number): TokenInfo[] {

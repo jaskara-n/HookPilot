@@ -112,13 +112,16 @@ export function LifiPanel({ defaultToAddress, onTx, isTestnet }: LifiPanelProps)
           />
         </div>
         <div>
-          <Label className="text-xs">Destination Address</Label>
+          <Label className="text-xs">Settlement Receiver (Treasury)</Label>
           <Input
             value={toAddress}
             onChange={(e) => setToAddress(e.target.value)}
             className="font-mono text-xs"
             placeholder="Treasury or pool wallet"
           />
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Defaults to your pool treasury. Use a custom address if you want a separate receiver.
+          </p>
         </div>
       </div>
 
