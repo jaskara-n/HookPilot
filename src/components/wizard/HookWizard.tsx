@@ -43,7 +43,7 @@ export function HookWizard() {
     prevStep,
     goToStep,
     selectDeployChoice,
-    startMining,
+    setDeployedAddress,
     reset,
     canProceed,
     getGasEstimate,
@@ -92,9 +92,6 @@ export function HookWizard() {
             deployChoice={state.deployChoice}
             onSelectChoice={selectDeployChoice}
             gasEstimates={getGasEstimate()}
-            isMining={state.isMining}
-            create2Salt={state.create2Salt}
-            onStartMining={startMining}
             flags={state.flags}
             agentPrompt={state.agentPrompt}
           />
@@ -102,19 +99,13 @@ export function HookWizard() {
       case 3:
         return (
           <ExecuteStep
-            tokenInputs={{
-              tokenA: state.poolConfig.tokenAInput,
-              tokenB: state.poolConfig.tokenBInput,
-              chainId: state.poolConfig.chainId,
-              tokenAAddress: state.poolConfig.tokenAAddress,
-              tokenBAddress: state.poolConfig.tokenBAddress,
-            }}
+            poolConfig={state.poolConfig}
             flags={state.flags}
             agentPrompt={state.agentPrompt}
-            feeTier={state.poolConfig.feeTier}
             deployChoice={state.deployChoice}
             auditedHook={state.auditedHook}
             deployedAddress={state.deployedAddress}
+            onDeployedAddressChange={setDeployedAddress}
           />
         );
       default:

@@ -1,12 +1,10 @@
 import { useState, useCallback } from "react";
 import {
   queryHookRegistry,
-  generateCREATE2Salt,
-  generateMockHookAddress,
   type HookFlags,
   type AuditedHook,
   NEW_DEPLOY_GAS_ESTIMATE,
-} from "@/lib/mock-registry";
+} from "@/lib/hook-registry";
 import type { PoolConfig } from "@/components/wizard/PoolSelectStep";
 import { mainnet } from "viem/chains";
 
@@ -17,8 +15,6 @@ export interface WizardState {
   agentPrompt: string;
   auditedHook: AuditedHook | null;
   deployChoice: "existing" | "custom" | null;
-  isMining: boolean;
-  create2Salt: string | null;
   deployedAddress: string | null;
 }
 
@@ -31,6 +27,10 @@ const initialState: WizardState = {
     feeTier: 3000,
     tokenAAddress: "",
     tokenBAddress: "",
+    tickSpacing: 60,
+    stablecoinInput: "",
+    stablecoinAddress: "",
+    treasuryAddress: "",
   },
   flags: {
     feeThreshold: false,
@@ -39,8 +39,6 @@ const initialState: WizardState = {
   agentPrompt: "",
   auditedHook: null,
   deployChoice: null,
-  isMining: false,
-  create2Salt: null,
   deployedAddress: null,
 };
 
@@ -63,7 +61,7 @@ export function useWizardState() {
     setState((prev) => {
       // When moving to step 3 (Decision), query the registry
       if (step === 2) {
-        const auditedHook = queryHookRegistry(prev.flags);
+        const auditedHook = queryHookRegistry(prev.flags, prev.poolConfig.chainId);
         return { ...prev, currentStep: step, auditedHook };
       }
       return { ...prev, currentStep: step };
@@ -82,21 +80,8 @@ export function useWizardState() {
     setState((prev) => ({ ...prev, deployChoice: choice }));
   }, []);
 
-  const startMining = useCallback(async () => {
-    setState((prev) => ({ ...prev, isMining: true }));
-
-    // Simulate 5-second mining animation
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-
-    const salt = generateCREATE2Salt();
-    const address = generateMockHookAddress(salt);
-
-    setState((prev) => ({
-      ...prev,
-      isMining: false,
-      create2Salt: salt,
-      deployedAddress: address,
-    }));
+  const setDeployedAddress = useCallback((deployedAddress: string | null) => {
+    setState((prev) => ({ ...prev, deployedAddress }));
   }, []);
 
   const reset = useCallback(() => {
@@ -109,6 +94,12 @@ export function useWizardState() {
         case 0: {
           const { poolConfig } = state;
           if (!poolConfig.tokenAAddress || !poolConfig.tokenBAddress) {
+            return false;
+          }
+          if (!poolConfig.stablecoinAddress) {
+            return false;
+          }
+          if (!/^0x[a-fA-F0-9]{40}$/.test(poolConfig.treasuryAddress)) {
             return false;
           }
           return (
@@ -153,7 +144,7 @@ export function useWizardState() {
     nextStep,
     prevStep,
     selectDeployChoice,
-    startMining,
+    setDeployedAddress,
     reset,
     canProceed,
     getGasEstimate,

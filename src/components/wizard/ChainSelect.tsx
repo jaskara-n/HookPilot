@@ -9,6 +9,7 @@ import {
   polygon,
   sepolia,
 } from "viem/chains";
+import { getV4Addresses } from "@/lib/uniswap-v4-registry";
 
 import { Label } from "@/components/ui/label";
 import {
@@ -56,7 +57,18 @@ export function ChainSelect({ value, onChange }: ChainSelectProps) {
               <SelectLabel>Mainnets</SelectLabel>
               {MAINNET_CHAINS.map((chain) => (
                 <SelectItem key={chain.id} value={String(chain.id)}>
-                  {chain.name} · {chain.nativeCurrency.symbol}
+                  <div className="flex items-center gap-2">
+                    <span>{chain.name} · {chain.nativeCurrency.symbol}</span>
+                    {getV4Addresses(chain.id) ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
+                        v4 ready
+                      </span>
+                    ) : (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                        custom
+                      </span>
+                    )}
+                  </div>
                 </SelectItem>
               ))}
             </SelectGroup>
@@ -65,7 +77,18 @@ export function ChainSelect({ value, onChange }: ChainSelectProps) {
               <SelectLabel>Testnets</SelectLabel>
               {TESTNET_CHAINS.map((chain) => (
                 <SelectItem key={chain.id} value={String(chain.id)}>
-                  {chain.name} · {chain.nativeCurrency.symbol}
+                  <div className="flex items-center gap-2">
+                    <span>{chain.name} · {chain.nativeCurrency.symbol}</span>
+                    {getV4Addresses(chain.id) ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400">
+                        v4 ready
+                      </span>
+                    ) : (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                        custom
+                      </span>
+                    )}
+                  </div>
                 </SelectItem>
               ))}
             </SelectGroup>

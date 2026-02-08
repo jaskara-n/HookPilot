@@ -68,6 +68,8 @@ contract FeeThresholdHookTest is Test {
 
         uint256 expectedFee = (10e6 * DEFAULT_FEE) / FEE_DENOMINATOR;
         assertEq(hook.accumulatedFees(poolId), expectedFee);
+        assertEq(hook.totalFeesCollected(poolId), expectedFee);
+        assertEq(hook.totalFeesDistributed(poolId), 0);
         assertEq(stablecoin.balanceOf(treasury), treasuryBefore);
     }
 
@@ -79,6 +81,8 @@ contract FeeThresholdHookTest is Test {
 
         uint256 expectedFee = (5_000e6 * DEFAULT_FEE) / FEE_DENOMINATOR;
         assertEq(hook.accumulatedFees(poolId), 0);
+        assertEq(hook.totalFeesCollected(poolId), expectedFee);
+        assertEq(hook.totalFeesDistributed(poolId), expectedFee);
         assertEq(stablecoin.balanceOf(treasury), treasuryBefore + expectedFee);
     }
 
@@ -89,6 +93,8 @@ contract FeeThresholdHookTest is Test {
         _afterSwapStableDelta(10e6);
         uint256 expectedFee = (10e6 * DEFAULT_FEE) / FEE_DENOMINATOR;
         assertEq(hook.accumulatedFees(poolId), expectedFee);
+        assertEq(hook.totalFeesCollected(poolId), expectedFee);
+        assertEq(hook.totalFeesDistributed(poolId), 0);
 
         hook.distributeFees(key);
         assertEq(hook.accumulatedFees(poolId), expectedFee);
@@ -98,11 +104,28 @@ contract FeeThresholdHookTest is Test {
         uint256 totalFee = expectedFee + (4_000e6 * DEFAULT_FEE) / FEE_DENOMINATOR;
         // still below threshold, no distribution yet
         assertEq(hook.accumulatedFees(poolId), totalFee);
+        assertEq(hook.totalFeesCollected(poolId), totalFee);
+        assertEq(hook.totalFeesDistributed(poolId), 0);
         assertEq(stablecoin.balanceOf(treasury), treasuryBefore);
 
         _afterSwapStableDelta(1_000e6);
         uint256 finalFee = totalFee + (1_000e6 * DEFAULT_FEE) / FEE_DENOMINATOR;
         assertEq(hook.accumulatedFees(poolId), 0);
+        assertEq(hook.totalFeesCollected(poolId), finalFee);
+        assertEq(hook.totalFeesDistributed(poolId), finalFee);
         assertEq(stablecoin.balanceOf(treasury), treasuryBefore + finalFee);
+    }
+
+    function test_feeAccumulation_handlesNegativeDelta() public {
+        stablecoin.mint(address(hook), 1_000_000e6);
+        uint256 treasuryBefore = stablecoin.balanceOf(treasury);
+
+        _afterSwapStableDelta(-10e6);
+
+        uint256 expectedFee = (10e6 * DEFAULT_FEE) / FEE_DENOMINATOR;
+        assertEq(hook.accumulatedFees(poolId), expectedFee);
+        assertEq(hook.totalFeesCollected(poolId), expectedFee);
+        assertEq(hook.totalFeesDistributed(poolId), 0);
+        assertEq(stablecoin.balanceOf(treasury), treasuryBefore);
     }
 }

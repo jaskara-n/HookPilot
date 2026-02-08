@@ -1,4 +1,4 @@
-import type { HookFlags } from "./mock-registry";
+import type { HookFlags } from "./hook-registry";
 import feeThresholdHook from "../../contracts/src/brand-token/FeeThresholdHook.sol?raw";
 import limitOrderHook from "../../contracts/src/brand-token/LimitOrderOnlyHook.sol?raw";
 import combinedHook from "../../contracts/src/brand-token/LimitOrderhook.sol?raw";

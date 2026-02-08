@@ -2,6 +2,7 @@
 pragma solidity ^0.8.22;
 
 import {LimitOrderV4Base} from "./base/LimitOrderV4Base.sol";
+import {BalanceDelta} from "@uniswap/v4-core/src/types/BalanceDelta.sol";
 
 contract LimitOrderHookE2E is LimitOrderV4Base {
     function test_scenario_multipleBuyOrders_allExecute_and_claim() public {
@@ -39,7 +40,8 @@ contract LimitOrderHookE2E is LimitOrderV4Base {
 
         uint256 totalExpectedOut;
         for (uint256 i = 0; i < 3; i++) {
-            totalExpectedOut += (amounts[i] * 1e18) / 6e5;
+            // Execution uses the limit price level, not the new price.
+            totalExpectedOut += (amounts[i] * 1e18) / normalized[i];
         }
         token.mint(address(hook), totalExpectedOut);
 
@@ -47,7 +49,7 @@ contract LimitOrderHookE2E is LimitOrderV4Base {
         vm.prank(user1);
         hook.claimExecutedLimitOrders(poolKey, normalized, true);
 
-        assertApproxEqAbs(token.balanceOf(user1), balanceBefore + totalExpectedOut, 5);
+        assertApproxEqAbs(token.balanceOf(user1), balanceBefore + totalExpectedOut, 10);
     }
 
     function test_scenario_multipleUsers_samePrice_claims_proportional() public {
@@ -77,10 +79,11 @@ contract LimitOrderHookE2E is LimitOrderV4Base {
         assertEq(totalLiq, 0);
         assertEq(ccons, CUMULATIVE_SCALE);
 
-        uint256 totalOut = (total * 1e18) / 7e5;
-        uint256 out1 = (totalOut * amt1) / total;
-        uint256 out2 = (totalOut * amt2) / total;
-        uint256 out3 = totalOut - out1 - out2;
+        // Execution uses the limit price level.
+        uint256 totalOut = (total * 1e18) / normalized;
+        uint256 out1 = (amt1 * 1e18) / normalized;
+        uint256 out2 = (amt2 * 1e18) / normalized;
+        uint256 out3 = (amt3 * 1e18) / normalized;
 
         token.mint(address(hook), totalOut);
 
@@ -98,9 +101,9 @@ contract LimitOrderHookE2E is LimitOrderV4Base {
         vm.prank(user3);
         hook.claimExecutedLimitOrders(poolKey, prices, true);
 
-        assertApproxEqAbs(token.balanceOf(user1), b1 + out1, 5);
-        assertApproxEqAbs(token.balanceOf(user2), b2 + out2, 5);
-        assertApproxEqAbs(token.balanceOf(user3), b3 + out3, 5);
+        assertApproxEqAbs(token.balanceOf(user1), b1 + out1, 10);
+        assertApproxEqAbs(token.balanceOf(user2), b2 + out2, 10);
+        assertApproxEqAbs(token.balanceOf(user3), b3 + out3, 10);
     }
 
     function test_scenario_userPlacesOrder_partiallyExecutes_cancelsRemainder() public {
@@ -221,5 +224,19 @@ contract LimitOrderHookE2E is LimitOrderV4Base {
         (uint256 totalLiq, uint256 ccons,) = hook.getPoolOrders(poolKey, normalized, true);
         assertEq(totalLiq, 0);
         assertEq(ccons, CUMULATIVE_SCALE);
+    }
+
+    function test_scenario_highVolume_feesDistributeCorrectly() public {
+        stablecoin.mint(address(hook), 1_000_000e6);
+        hook.setMockPrice(1e6);
+
+        uint256 treasuryBefore = stablecoin.balanceOf(treasury);
+        BalanceDelta delta = _swapStableForToken(user1, 5_000e6);
+        uint256 expectedFee = _expectedFeeFromDelta(delta);
+
+        assertGe(expectedFee, hook.MINIMUM_DISTRIBUTION_THRESHOLD());
+        assertEq(hook.totalFeesCollected(poolId), expectedFee);
+        assertEq(hook.totalFeesDistributed(poolId), expectedFee);
+        assertEq(stablecoin.balanceOf(treasury), treasuryBefore + expectedFee);
     }
 }

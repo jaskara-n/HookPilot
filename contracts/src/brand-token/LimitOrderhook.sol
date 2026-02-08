@@ -37,6 +37,9 @@ contract LimitOrderhook is BaseHook {
     uint8 public stableDecimals;
 
     mapping(bytes32 => uint256) public accumulatedFees;
+    mapping(bytes32 => uint256) public totalFeesCollected;
+    mapping(bytes32 => uint256) public totalFeesDistributed;
+    mapping(bytes32 => uint256) public executedOrdersCount;
     mapping(bytes32 => mapping(uint256 => LimitOrders)) public buyOrders;
     mapping(bytes32 => mapping(uint256 => LimitOrders)) public sellOrders;
     mapping(bytes32 => uint256) public lastLimitOrderTraversal;
@@ -120,6 +123,7 @@ contract LimitOrderhook is BaseHook {
         if (stableDelta != 0) {
             uint256 feeAmount = (uint256(stableDelta > 0 ? stableDelta : -stableDelta) * DEFAULT_FEE) / FEE_DENOMINATOR;
             accumulatedFees[poolId] += feeAmount;
+            totalFeesCollected[poolId] += feeAmount;
             _distributeFees(poolId, stableCurrency);
         }
 
@@ -351,6 +355,7 @@ contract LimitOrderhook is BaseHook {
                 steps++;
             }
         } else if (newPrice < oldPrice && newNormalized < oldNormalized) {
+            if (oldNormalized < PRICE_STEP) return;
             for (
                 uint256 price = oldNormalized - PRICE_STEP;
                 price >= newNormalized && steps < MAX_PRICE_STEPS;
@@ -360,12 +365,13 @@ contract LimitOrderhook is BaseHook {
                     _executeOrdersAtPrice(poolId, price, true, key);
                 }
                 steps++;
-                if (price == newNormalized) break;
+                if (price == newNormalized || price == 0) break;
             }
         }
     }
 
     function _executeOrdersAtPrice(bytes32 poolId, uint256 price, bool isBuy, PoolKey calldata key) internal {
+        if (price == 0) return;
         if (lastExecutedBlock[poolId][price] == block.number) return;
         lastExecutedBlock[poolId][price] = block.number;
 
@@ -378,12 +384,11 @@ contract LimitOrderhook is BaseHook {
 
         orders.cumulativeConsumedPerInput += (executedAmount * CUMULATIVE_SCALE) / orgLiquidity;
 
-        uint256 currentPrice = _getCurrentPrice(key);
-        if (currentPrice == 0) revert ZeroPrice();
         uint8 tokenDecimals = _getTokenDecimals(key);
-        uint256 outputAmount = _quoteOutput(executedAmount, currentPrice, tokenDecimals, isBuy);
+        uint256 outputAmount = _quoteOutput(executedAmount, price, tokenDecimals, isBuy);
 
         orders.cumulativeOutputPerInput += (outputAmount * CUMULATIVE_SCALE) / orgLiquidity;
+        executedOrdersCount[poolId] += 1;
     }
 
     function _quoteOutput(uint256 amountIn, uint256 price, uint8 tokenDecimals, bool isBuy)
@@ -391,7 +396,7 @@ contract LimitOrderhook is BaseHook {
         pure
         returns (uint256)
     {
-        if (price == 0) revert ZeroPrice();
+        if (price == 0) return 0;
         uint256 tokenScale = 10 ** tokenDecimals;
         if (isBuy) {
             return FullMath.mulDiv(amountIn, tokenScale, price);
@@ -442,6 +447,7 @@ contract LimitOrderhook is BaseHook {
 
         uint256 totalFees = accumulatedFees[poolId];
         accumulatedFees[poolId] = 0;
+        totalFeesDistributed[poolId] += totalFees;
         IERC20(Currency.unwrap(stableCurrency)).safeTransfer(treasury, totalFees);
     }
 

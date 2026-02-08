@@ -1,5 +1,14 @@
 import type { Address } from "viem";
-import { arbitrum, base, mainnet, optimism, polygon, sepolia } from "viem/chains";
+import {
+  arbitrum,
+  base,
+  baseSepolia,
+  mainnet,
+  optimism,
+  optimismSepolia,
+  polygon,
+  sepolia,
+} from "viem/chains";
 
 export interface TokenInfo {
   symbol: string;
@@ -25,9 +34,32 @@ const EXTRA_TOKENS: Record<number, TokenInfo[]> = {
       chainId: mainnet.id,
     },
   ],
+  [base.id]: [
+    {
+      symbol: "USDC",
+      name: "USD Coin",
+      address: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+      chainId: base.id,
+    },
+    {
+      symbol: "WETH",
+      name: "Wrapped Ether",
+      address: "0x4200000000000000000000000000000000000006",
+      chainId: base.id,
+    },
+  ],
 };
 
-const SUPPORTED_CHAINS = [mainnet, base, optimism, arbitrum, polygon, sepolia] as const;
+const SUPPORTED_CHAINS = [
+  mainnet,
+  base,
+  baseSepolia,
+  optimism,
+  optimismSepolia,
+  arbitrum,
+  polygon,
+  sepolia,
+] as const;
 
 export function getCommonTokens(chainId: number): TokenInfo[] {
   const chain = SUPPORTED_CHAINS.find((item) => item.id === chainId);

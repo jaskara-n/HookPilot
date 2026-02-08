@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import Editor from "@monaco-editor/react";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { generateHookCode } from "@/lib/hook-code-generator";
-import type { AuditedHook, HookFlags } from "@/lib/mock-registry";
+import type { AuditedHook, HookFlags } from "@/lib/hook-registry";
 import { Shield, Rocket, Fuel, CheckCircle2, AlertTriangle, FileCode } from "lucide-react";
 
 interface DecisionStepProps {
@@ -12,9 +11,6 @@ interface DecisionStepProps {
   deployChoice: 'existing' | 'custom' | null;
   onSelectChoice: (choice: 'existing' | 'custom') => void;
   gasEstimates: { existing: number | null; custom: number };
-  isMining: boolean;
-  create2Salt: string | null;
-  onStartMining: () => void;
   flags: HookFlags;
   agentPrompt: string;
 }
@@ -24,9 +20,6 @@ export function DecisionStep({
   deployChoice,
   onSelectChoice,
   gasEstimates,
-  isMining,
-  create2Salt,
-  onStartMining,
   flags,
   agentPrompt,
 }: DecisionStepProps) {
@@ -150,44 +143,16 @@ export function DecisionStep({
       </div>
 
       {deployChoice === 'custom' && (
-        <div className="space-y-4 pt-4 border-t border-border">
-          {isMining ? (
-            <div className="p-6 rounded-xl bg-secondary/10 border border-secondary/30 text-center">
-              <div className="animate-mining inline-block mb-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-secondary to-accent flex items-center justify-center">
-                  <Rocket className="w-8 h-8 text-secondary-foreground" />
-                </div>
-              </div>
-              <p className="text-lg font-semibold text-secondary">Mining CREATE2 Address...</p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Finding optimal salt for deterministic deployment
+        <div className="p-4 rounded-xl bg-secondary/10 border border-secondary/30">
+          <div className="flex items-center gap-3">
+            <Rocket className="w-6 h-6 text-secondary" />
+            <div>
+              <p className="font-semibold text-secondary">Custom Deployment Selected</p>
+              <p className="text-sm text-muted-foreground">
+                We will mine the CREATE2 salt and deploy the hook in the next step.
               </p>
-              <div className="flex justify-center gap-1 mt-4">
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="w-2 h-2 rounded-full bg-secondary animate-pulse"
-                    style={{ animationDelay: `${i * 0.2}s` }}
-                  />
-                ))}
-              </div>
             </div>
-          ) : create2Salt ? (
-            <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30">
-              <p className="text-sm font-semibold text-green-400 mb-2">CREATE2 Salt Generated</p>
-              <code className="block p-3 bg-muted rounded-lg text-xs font-mono break-all text-primary">
-                {create2Salt}
-              </code>
-            </div>
-          ) : (
-            <Button
-              onClick={onStartMining}
-              className="w-full bg-gradient-to-r from-secondary to-accent hover:opacity-90"
-            >
-              <Rocket className="w-4 h-4 mr-2" />
-              Start Address Mining
-            </Button>
-          )}
+          </div>
         </div>
       )}
 
@@ -207,7 +172,7 @@ export function DecisionStep({
             This preview updates in real time based on the features you select.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-0 h-[320px]">
+        <CardContent className="p-0 h-[520px]">
           <Editor
             height="100%"
             language="sol"

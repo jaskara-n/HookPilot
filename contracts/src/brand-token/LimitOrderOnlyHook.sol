@@ -36,6 +36,7 @@ contract LimitOrderOnlyHook is BaseHook {
     mapping(bytes32 => uint256) public lastLimitOrderTraversal;
     mapping(bytes32 => uint256) public lastCheckedPrice;
     mapping(bytes32 => mapping(uint256 => uint256)) public lastExecutedBlock;
+    mapping(bytes32 => uint256) public executedOrdersCount;
 
     struct LimitOrders {
         uint256 totalLiquidity;
@@ -313,6 +314,7 @@ contract LimitOrderOnlyHook is BaseHook {
                 steps++;
             }
         } else if (newPrice < oldPrice && newNormalized < oldNormalized) {
+            if (oldNormalized < PRICE_STEP) return;
             for (
                 uint256 price = oldNormalized - PRICE_STEP;
                 price >= newNormalized && steps < MAX_PRICE_STEPS;
@@ -322,12 +324,13 @@ contract LimitOrderOnlyHook is BaseHook {
                     _executeOrdersAtPrice(poolId, price, true, key);
                 }
                 steps++;
-                if (price == newNormalized) break;
+                if (price == newNormalized || price == 0) break;
             }
         }
     }
 
     function _executeOrdersAtPrice(bytes32 poolId, uint256 price, bool isBuy, PoolKey calldata key) internal {
+        if (price == 0) return;
         if (lastExecutedBlock[poolId][price] == block.number) return;
         lastExecutedBlock[poolId][price] = block.number;
 
@@ -340,12 +343,11 @@ contract LimitOrderOnlyHook is BaseHook {
 
         orders.cumulativeConsumedPerInput += (executedAmount * CUMULATIVE_SCALE) / orgLiquidity;
 
-        uint256 currentPrice = _getCurrentPrice(key);
-        if (currentPrice == 0) revert ZeroPrice();
         uint8 tokenDecimals = _getTokenDecimals(key);
-        uint256 outputAmount = _quoteOutput(executedAmount, currentPrice, tokenDecimals, isBuy);
+        uint256 outputAmount = _quoteOutput(executedAmount, price, tokenDecimals, isBuy);
 
         orders.cumulativeOutputPerInput += (outputAmount * CUMULATIVE_SCALE) / orgLiquidity;
+        executedOrdersCount[poolId] += 1;
     }
 
     function _quoteOutput(uint256 amountIn, uint256 price, uint8 tokenDecimals, bool isBuy)
@@ -353,7 +355,7 @@ contract LimitOrderOnlyHook is BaseHook {
         pure
         returns (uint256)
     {
-        if (price == 0) revert ZeroPrice();
+        if (price == 0) return 0;
         uint256 tokenScale = 10 ** tokenDecimals;
         if (isBuy) {
             return FullMath.mulDiv(amountIn, tokenScale, price);

@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { generateHookCode } from "@/lib/hook-code-generator";
-import type { HookFlags } from "@/lib/mock-registry";
+import type { HookFlags } from "@/lib/hook-registry";
 import { Percent, ListOrdered, Sparkles, AlertTriangle, CheckCircle2, FileCode } from "lucide-react";
 
 interface FeatureTogglesProps {
@@ -127,7 +127,7 @@ export function FeatureToggles({
             Live Hook Code (Updates With Toggles)
           </p>
         </div>
-        <div className="h-[260px]">
+        <div className="h-[480px]">
           <Editor
             height="100%"
             language="sol"

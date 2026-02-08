@@ -75,9 +75,11 @@ abstract contract LimitOrderV4Base is Test, UniswapV4Setup {
         poolId = PoolId.unwrap(poolKey.toId());
 
         // Fund this contract and add liquidity for swaps.
-        // Large balances to safely cover initial full-range liquidity mint.
+        // Use deal to guarantee large balances regardless of token decimals.
         stablecoin.mint(address(this), 1e24);
         token.mint(address(this), 1e24);
+        deal(address(stablecoin), address(this), 1e30);
+        deal(address(token), address(this), 1e30);
         stablecoin.approve(address(modifyLiquidityRouter), type(uint256).max);
         token.approve(address(modifyLiquidityRouter), type(uint256).max);
         stablecoin.approve(address(swapRouter), type(uint256).max);
@@ -93,6 +95,12 @@ abstract contract LimitOrderV4Base is Test, UniswapV4Setup {
         token.mint(user1, 1_000_000e18);
         token.mint(user2, 1_000_000e18);
         token.mint(user3, 1_000_000e18);
+        deal(address(stablecoin), user1, 1_000_000e6);
+        deal(address(stablecoin), user2, 1_000_000e6);
+        deal(address(stablecoin), user3, 1_000_000e6);
+        deal(address(token), user1, 1_000_000e18);
+        deal(address(token), user2, 1_000_000e18);
+        deal(address(token), user3, 1_000_000e18);
 
         _approveUser(user1);
         _approveUser(user2);

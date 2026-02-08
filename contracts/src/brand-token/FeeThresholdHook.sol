@@ -29,6 +29,8 @@ contract FeeThresholdHook is BaseHook {
     uint8 public stableDecimals;
 
     mapping(bytes32 => uint256) public accumulatedFees;
+    mapping(bytes32 => uint256) public totalFeesCollected;
+    mapping(bytes32 => uint256) public totalFeesDistributed;
 
     error AddressCannotBeZero();
     error InvalidStablecoin();
@@ -85,6 +87,7 @@ contract FeeThresholdHook is BaseHook {
         if (stableDelta != 0) {
             uint256 feeAmount = (uint256(stableDelta > 0 ? stableDelta : -stableDelta) * DEFAULT_FEE) / FEE_DENOMINATOR;
             accumulatedFees[poolId] += feeAmount;
+            totalFeesCollected[poolId] += feeAmount;
             _distributeFees(poolId, stableCurrency);
         }
 
@@ -126,6 +129,7 @@ contract FeeThresholdHook is BaseHook {
 
         uint256 totalFees = accumulatedFees[poolId];
         accumulatedFees[poolId] = 0;
+        totalFeesDistributed[poolId] += totalFees;
         IERC20(Currency.unwrap(stableCurrency)).safeTransfer(treasury, totalFees);
     }
 
