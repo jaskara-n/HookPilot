@@ -185,6 +185,25 @@ export function ExecuteStep({
     }
   }, [walletAddress, poolConfig.treasuryAddress]);
 
+  type ReadContractParams =
+    Parameters<NonNullable<typeof publicClient>["readContract"]>[0];
+  const readContract = async <T,>(params: ReadContractParams) => {
+    if (!publicClient) throw new Error("Public client not ready");
+    console.groupCollapsed("[HookWizard] readContract");
+    console.log(params);
+    console.groupEnd();
+    return (await publicClient.readContract({
+      authorizationList: [],
+      ...params,
+    } as ReadContractParams & { authorizationList: readonly unknown[] })) as T;
+  };
+
+  const logTx = (label: string, payload: Record<string, unknown>) => {
+    console.groupCollapsed(`[HookWizard] ${label}`);
+    console.log(payload);
+    console.groupEnd();
+  };
+
   const poolManagerAddress = (addressOverrides.poolManager || "") as Address;
   const positionManagerAddress = (addressOverrides.positionManager ||
     "") as Address;
@@ -231,7 +250,7 @@ export function ExecuteStep({
         if (poolKey.currency0 === ZERO_ADDRESS) {
           setToken0Decimals(18);
         } else {
-          const decimals = await publicClient.readContract({
+          const decimals = await readContract<bigint>({
             address: poolKey.currency0,
             abi: ERC20_ABI,
             functionName: "decimals",
@@ -245,7 +264,7 @@ export function ExecuteStep({
         if (poolKey.currency1 === ZERO_ADDRESS) {
           setToken1Decimals(18);
         } else {
-          const decimals = await publicClient.readContract({
+          const decimals = await readContract<bigint>({
             address: poolKey.currency1,
             abi: ERC20_ABI,
             functionName: "decimals",
@@ -344,6 +363,7 @@ export function ExecuteStep({
   const handleDeployHookFactory = async () => {
     if (!walletClient || !publicClient) return;
     try {
+      logTx("deployHookFactory", { abi: "HOOK_FACTORY", bytecode: "[bytecode]" });
       const txHash = await walletClient.deployContract({
         abi: HOOK_FACTORY.abi,
         bytecode: HOOK_FACTORY.bytecode,
@@ -366,6 +386,10 @@ export function ExecuteStep({
     setMinedSalt(null);
     setPredictedHook(null);
 
+    logTx("mineHookSalt", {
+      deployer: hookFactoryAddress,
+      initCodeHash,
+    });
     const result = await mineHookSalt({
       deployer: hookFactoryAddress as Address,
       initCodeHash,
@@ -383,6 +407,11 @@ export function ExecuteStep({
     if (!walletClient || !publicClient || !initCode || !minedSalt) return;
     setHookDeploying(true);
     try {
+      logTx("deployHook", {
+        factory: hookFactoryAddress,
+        salt: minedSalt,
+        initCodeHash,
+      });
       const txHash = await walletClient.writeContract({
         address: hookFactoryAddress as Address,
         abi: HOOK_FACTORY_ABI,
@@ -417,6 +446,10 @@ export function ExecuteStep({
     try {
       const args = [poolKey, sqrtPriceX96] as const;
       if (positionManagerAddress) {
+        logTx("initializePool (posm)", {
+          address: positionManagerAddress,
+          args,
+        });
         const txHash = await walletClient.writeContract({
           address: positionManagerAddress,
           abi: POSITION_MANAGER_ABI,
@@ -425,6 +458,10 @@ export function ExecuteStep({
         });
         await publicClient.waitForTransactionReceipt({ hash: txHash });
       } else {
+        logTx("initializePool (manager)", {
+          address: poolManagerAddress,
+          args,
+        });
         const txHash = await walletClient.writeContract({
           address: poolManagerAddress,
           abi: POOL_MANAGER_ABI,
@@ -444,6 +481,10 @@ export function ExecuteStep({
     if (!walletClient || !publicClient) return;
     if (token === ZERO_ADDRESS) return;
     try {
+      logTx("approvePermit2", {
+        token,
+        spender: permit2Address,
+      });
       const approveHash = await walletClient.writeContract({
         address: token,
         abi: ERC20_ABI,
@@ -457,6 +498,11 @@ export function ExecuteStep({
       });
       await publicClient.waitForTransactionReceipt({ hash: approveHash });
 
+      logTx("permit2Approve", {
+        permit2: permit2Address,
+        token,
+        spender,
+      });
       const permitHash = await walletClient.writeContract({
         address: permit2Address,
         abi: PERMIT2_ABI,
@@ -489,7 +535,7 @@ export function ExecuteStep({
       const tickLower = minUsableTick(poolConfig.tickSpacing);
       const tickUpper = maxUsableTick(poolConfig.tickSpacing);
 
-      const slot0 = await publicClient.readContract({
+      const slot0 = await readContract<readonly [bigint, number, number, number]>({
         address: stateViewAddress,
         abi: STATE_VIEW_ABI,
         functionName: "getSlot0",
@@ -570,6 +616,18 @@ export function ExecuteStep({
       const deadline = BigInt(Math.floor(Date.now() / 1000) + 900);
       const value = poolKey.currency0 === ZERO_ADDRESS ? amount0Max : 0n;
 
+      logTx("modifyLiquidities", {
+        positionManagerAddress,
+        amount0: amount0.toString(),
+        amount1: amount1.toString(),
+        liquidity: liquidity.toString(),
+        tickLower,
+        tickUpper,
+        amount0Max: amount0Max.toString(),
+        amount1Max: amount1Max.toString(),
+        deadline: deadline.toString(),
+        value: value.toString(),
+      });
       const txHash = await walletClient.writeContract({
         address: positionManagerAddress,
         abi: POSITION_MANAGER_ABI,
@@ -589,6 +647,7 @@ export function ExecuteStep({
   const handleDeploySwapRouter = async () => {
     if (!walletClient || !publicClient || !poolManagerAddress) return;
     try {
+      logTx("deploySwapRouter", { poolManagerAddress });
       const txHash = await walletClient.deployContract({
         abi: SIMPLE_SWAP_ROUTER.abi,
         bytecode: SIMPLE_SWAP_ROUTER.bytecode,
@@ -610,6 +669,10 @@ export function ExecuteStep({
     if (token === ZERO_ADDRESS) return;
     try {
       setSwapApprovalStatus("pending");
+      logTx("approveSwapToken", {
+        token,
+        spender: swapRouterAddress,
+      });
       const approveHash = await walletClient.writeContract({
         address: token,
         abi: ERC20_ABI,
@@ -647,6 +710,14 @@ export function ExecuteStep({
             ? amountIn
             : 0n;
 
+      logTx("swapExactIn", {
+        swapRouterAddress,
+        poolKey,
+        swapZeroForOne,
+        amountIn: amountIn.toString(),
+        sqrtPriceLimit: sqrtPriceLimit.toString(),
+        value: value.toString(),
+      });
       const txHash = await walletClient.writeContract({
         address: swapRouterAddress as Address,
         abi: SIMPLE_SWAP_ROUTER_ABI,
@@ -671,24 +742,25 @@ export function ExecuteStep({
     let feesAccrued: bigint | undefined;
     let executedOrders: bigint | undefined;
 
+    logTx("refreshMetrics", { poolId, hookAddress });
     try {
-      slot0 = (await publicClient.readContract({
+      slot0 = await readContract<readonly [bigint, number, number, number]>({
         address: stateViewAddress,
         abi: STATE_VIEW_ABI,
         functionName: "getSlot0",
         args: [poolId],
-      })) as readonly [bigint, number, number, number];
+      });
     } catch (error) {
       console.error(error);
     }
 
     try {
-      liquidity = (await publicClient.readContract({
+      liquidity = await readContract<bigint>({
         address: stateViewAddress,
         abi: STATE_VIEW_ABI,
         functionName: "getLiquidity",
         args: [poolId],
-      })) as bigint;
+      });
     } catch (error) {
       console.error(error);
     }
@@ -696,34 +768,34 @@ export function ExecuteStep({
     if (hookAddress !== ZERO_ADDRESS) {
       if (flags.feeThreshold) {
         try {
-          feesCollected = (await publicClient.readContract({
+          feesCollected = await readContract<bigint>({
             address: hookAddress,
             abi: HOOK_METRICS_ABI,
             functionName: "totalFeesCollected",
             args: [poolId],
-          })) as bigint;
+          });
         } catch (error) {
           console.error(error);
         }
 
         try {
-          feesDistributed = (await publicClient.readContract({
+          feesDistributed = await readContract<bigint>({
             address: hookAddress,
             abi: HOOK_METRICS_ABI,
             functionName: "totalFeesDistributed",
             args: [poolId],
-          })) as bigint;
+          });
         } catch (error) {
           console.error(error);
         }
 
         try {
-          feesAccrued = (await publicClient.readContract({
+          feesAccrued = await readContract<bigint>({
             address: hookAddress,
             abi: HOOK_METRICS_ABI,
             functionName: "accumulatedFees",
             args: [poolId],
-          })) as bigint;
+          });
         } catch (error) {
           console.error(error);
         }
@@ -731,12 +803,12 @@ export function ExecuteStep({
 
       if (flags.limitOrders) {
         try {
-          executedOrders = (await publicClient.readContract({
+          executedOrders = await readContract<bigint>({
             address: hookAddress,
             abi: HOOK_METRICS_ABI,
             functionName: "executedOrdersCount",
             args: [poolId],
-          })) as bigint;
+          });
         } catch (error) {
           console.error(error);
         }
@@ -765,14 +837,15 @@ export function ExecuteStep({
         hooks: lookup.hook as Address,
       });
       const id = computePoolId(key);
+      logTx("lookupPool", { key, id });
       setLookup((prev) => ({ ...prev, poolId: id }));
-      const slot0 = await publicClient.readContract({
+      const slot0 = await readContract<readonly [bigint, number, number, number]>({
         address: stateViewAddress,
         abi: STATE_VIEW_ABI,
         functionName: "getSlot0",
         args: [id],
       });
-      const liquidity = await publicClient.readContract({
+      const liquidity = await readContract<bigint>({
         address: stateViewAddress,
         abi: STATE_VIEW_ABI,
         functionName: "getLiquidity",
