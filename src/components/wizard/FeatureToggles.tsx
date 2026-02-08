@@ -1,9 +1,12 @@
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
-import type { HookFlags } from '@/lib/mock-registry';
-import { Percent, ListOrdered, Sparkles, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { useEffect, useState } from "react";
+import Editor from "@monaco-editor/react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { generateHookCode } from "@/lib/hook-code-generator";
+import type { HookFlags } from "@/lib/mock-registry";
+import { Percent, ListOrdered, Sparkles, AlertTriangle, CheckCircle2, FileCode } from "lucide-react";
 
 interface FeatureTogglesProps {
   flags: HookFlags;
@@ -33,6 +36,16 @@ export function FeatureToggles({
   agentPrompt,
   onAgentPromptChange,
 }: FeatureTogglesProps) {
+  const [code, setCode] = useState("");
+  const [flash, setFlash] = useState(false);
+
+  useEffect(() => {
+    setCode(generateHookCode(flags, agentPrompt));
+    setFlash(true);
+    const timeout = setTimeout(() => setFlash(false), 450);
+    return () => clearTimeout(timeout);
+  }, [flags, agentPrompt]);
+
   const handleToggle = (key: keyof HookFlags) => {
     onFlagsChange({ ...flags, [key]: !flags[key] });
   };
@@ -99,6 +112,38 @@ export function FeatureToggles({
             </div>
           );
         })}
+      </div>
+
+      <div
+        className={cn(
+          "border border-secondary/30 rounded-xl overflow-hidden relative cyber-glow-purple",
+          flash && "ring-2 ring-secondary/40 animate-pulse-glow"
+        )}
+      >
+        <div className="absolute inset-0 pointer-events-none opacity-20 animate-shimmer" />
+        <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50 bg-muted/10">
+          <FileCode className="w-4 h-4 text-secondary" />
+          <p className="text-sm font-semibold text-secondary">
+            Live Hook Code (Updates With Toggles)
+          </p>
+        </div>
+        <div className="h-[260px]">
+          <Editor
+            height="100%"
+            language="sol"
+            theme="vs-dark"
+            value={code}
+            options={{
+              readOnly: true,
+              minimap: { enabled: false },
+              fontSize: 12,
+              lineNumbers: "on",
+              scrollBeyondLastLine: false,
+              wordWrap: "on",
+              padding: { top: 14, bottom: 14 },
+            }}
+          />
+        </div>
       </div>
 
       <div className="space-y-3 pt-4 border-t border-border">

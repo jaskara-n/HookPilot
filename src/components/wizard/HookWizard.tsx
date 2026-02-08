@@ -95,6 +95,8 @@ export function HookWizard() {
             isMining={state.isMining}
             create2Salt={state.create2Salt}
             onStartMining={startMining}
+            flags={state.flags}
+            agentPrompt={state.agentPrompt}
           />
         );
       case 3:

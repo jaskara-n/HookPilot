@@ -1,8 +1,11 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import type { AuditedHook } from '@/lib/mock-registry';
-import { Shield, Rocket, Fuel, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { useEffect, useState } from "react";
+import Editor from "@monaco-editor/react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { generateHookCode } from "@/lib/hook-code-generator";
+import type { AuditedHook, HookFlags } from "@/lib/mock-registry";
+import { Shield, Rocket, Fuel, CheckCircle2, AlertTriangle, FileCode } from "lucide-react";
 
 interface DecisionStepProps {
   auditedHook: AuditedHook | null;
@@ -12,6 +15,8 @@ interface DecisionStepProps {
   isMining: boolean;
   create2Salt: string | null;
   onStartMining: () => void;
+  flags: HookFlags;
+  agentPrompt: string;
 }
 
 export function DecisionStep({
@@ -22,7 +27,19 @@ export function DecisionStep({
   isMining,
   create2Salt,
   onStartMining,
+  flags,
+  agentPrompt,
 }: DecisionStepProps) {
+  const [code, setCode] = useState("");
+  const [flash, setFlash] = useState(false);
+
+  useEffect(() => {
+    setCode(generateHookCode(flags, agentPrompt));
+    setFlash(true);
+    const timeout = setTimeout(() => setFlash(false), 450);
+    return () => clearTimeout(timeout);
+  }, [flags, agentPrompt]);
+
   const formatGas = (gas: number) => {
     if (gas >= 1000000) {
       return `~${(gas / 1000000).toFixed(1)}M gas`;
@@ -173,6 +190,41 @@ export function DecisionStep({
           )}
         </div>
       )}
+
+      <Card
+        className={cn(
+          "border-secondary/30 cyber-glow-purple overflow-hidden relative",
+          flash && "ring-2 ring-secondary/40 animate-pulse-glow"
+        )}
+      >
+        <div className="absolute inset-0 pointer-events-none opacity-20 animate-shimmer" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-secondary">
+            <FileCode className="w-5 h-5" />
+            Live Hook Code (Updates With Toggles)
+          </CardTitle>
+          <CardDescription>
+            This preview updates in real time based on the features you select.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0 h-[320px]">
+          <Editor
+            height="100%"
+            language="sol"
+            theme="vs-dark"
+            value={code}
+            options={{
+              readOnly: true,
+              minimap: { enabled: false },
+              fontSize: 12,
+              lineNumbers: "on",
+              scrollBeyondLastLine: false,
+              wordWrap: "on",
+              padding: { top: 14, bottom: 14 },
+            }}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }
